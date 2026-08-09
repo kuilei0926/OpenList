@@ -1,175 +1,70 @@
 <div align="center">
   <img src="https://raw.githubusercontent.com/OpenListTeam/Logo/main/logo.svg" width="128" height="128" alt="logo" />
 
-  <p><em>OpenList is a resilient, long-term governance, community-driven fork of AList — built to defend open source against trust-based attacks.</em></p>
+  <p><em>OpenList FotCrypt Fork — 在 OpenList 上集成飞牛 fnOS 加密备份（.fot）解密/加密驱动的个人分支。</em></p>
 
-  <img src="https://goreportcard.com/badge/github.com/OpenListTeam/OpenList/v3" alt="latest version" />
-  <a href="https://github.com/OpenListTeam/OpenList/blob/main/LICENSE"><img src="https://img.shields.io/github/license/OpenListTeam/OpenList" alt="License" /></a>
-  <a href="https://github.com/OpenListTeam/OpenList/actions?query=workflow%3ABuild"><img src="https://img.shields.io/github/actions/workflow/status/OpenListTeam/OpenList/build.yml?branch=main" alt="Build status" /></a>
-  <a href="https://github.com/OpenListTeam/OpenList/releases"><img src="https://img.shields.io/github/release/OpenListTeam/OpenList" alt="latest version" /></a>
-
-  <a href="https://github.com/OpenListTeam/OpenList/discussions"><img src="https://img.shields.io/github/discussions/OpenListTeam/OpenList?color=%23ED8936" alt="discussions" /></a>
-  <a href="https://github.com/OpenListTeam/OpenList/releases"><img src="https://img.shields.io/github/downloads/OpenListTeam/OpenList/total?color=%239F7AEA&logo=github" alt="Downloads" /></a>
+  <a href="https://github.com/kuilei0926/OpenList"><img src="https://img.shields.io/github/license/kuilei0926/OpenList" alt="License" /></a>
+  <a href="https://github.com/kuilei0926/OpenList/releases"><img src="https://img.shields.io/github/release/kuilei0926/OpenList" alt="latest version" /></a>
 </div>
 
 ---
 
-- English | [中文](./README/README_cn.md) | [日本語](./README/README_ja.md) | [Dutch](./README/README_nl.md) | [한국어](./README/README_ko.md) | [Deutsch](./README/README_de.md) | [Русский](./README/README_ru.md) | [Français](./README/README_fr.md) | [Español](./README/README_es.md) | [العربية](./README/README_ar.md)
+# 本仓库说明
 
-- [Contributing](./CONTRIBUTING.md)
-- [CODE OF CONDUCT](./CODE_OF_CONDUCT.md)
-- [LICENSE](./LICENSE)
+**这是一个 OpenList 的个人 fork**，在保持与上游 [OpenListTeam/OpenList](https://github.com/OpenListTeam/OpenList) 同步的基础上，新增了一个 **FotCrypt** 存储驱动。
 
-## Disclaimer
+> 上游 OpenList 的完整中文文档见 [README_cn.md](./README/README_cn.md)。本文件仅补充 fork 特有的内容。
 
-OpenList is an open-source project independently maintained by the OpenList Team, following the AGPL-3.0 license and committed to maintaining complete code openness and modification transparency.
+## 为什么有这个仓库
 
-We have noticed the emergence of some third-party projects in the community with names similar to this project, such as OpenListApp/OpenListApp, as well as some paid proprietary software using the same or similar naming. To avoid user confusion, we hereby declare:
+飞牛私有云（fnOS）的「加密备份」功能会把文件加密成 `.fot` 格式。官方没有提供在线浏览/直接访问这些加密文件的方式，也没有离线解密工具。
 
-- OpenList has no official association with any third-party derivative projects.
+本 fork 新增的 **FotCrypt** 驱动可以让 OpenList **透明地解密这些 `.fot` 文件**，实现：
+- 📂 直接浏览加密备份目录，显示**解密后的真实文件名和大小**
+- ▶️ 在线预览、播放（视频/音频/图片/文档），支持拖动进度条（随机访问）
+- ⬇️ 直接下载解密后的文件
+- ⬆️ 上传文件时**自动加密成 .fot 格式**，兼容飞牛备份格式
 
-- All software, code, and services of this project are maintained by the OpenList Team and are freely available on GitHub.
+由于驱动实现依赖对 fnOS 私有加密格式的逆向分析、且首次列出大目录的性能受网盘 API 限速影响较大，**该驱动不推送给上游**，仅在此个人仓库发布，供有需要的人使用。
 
-- Project documentation and API services primarily rely on charitable resources provided by Cloudflare. There are currently no paid plans or commercial deployments, and the use of existing features does not involve any costs.
+---
 
-We respect the community's rights to free use and derivative development, but we also strongly urge downstream projects:
+## FotCrypt 驱动
 
-- Should not use the "OpenList" name for impersonation promotion or commercial gain;
+> **解密思路来源**：本驱动的 .fot 格式分析基于飞牛官方论坛用户 [陪玩](https://club.fnnas.com/forum.php?mod=viewthread&tid=69019) 分享的《飞牛加密备份 FOT 文件离线脱机解密记录》帖文（https://club.fnnas.com/forum.php?mod=viewthread&tid=69019 ），在此致谢。
 
-- Must not distribute OpenList-based code in a closed-source manner or violate AGPL license terms.
+### 快速开始
 
-To better maintain healthy ecosystem development, we recommend:
+1. 先在 OpenList 添加一个**底层存储**（本地目录、WebDAV、阿里云盘等），里面存放 `.fot` 加密文件
+2. 再添加一个 **FotCrypt** 存储，填写：
+   - **Password**：加密口令（必须与创建 fnOS 备份时设置的一致）
+   - **Remote Path**：底层存储的挂载路径，如 `/local` 或 `/webdav`
 
-- Clearly indicate the project source and choose appropriate open-source licenses in accordance with the open-source spirit;
+配置完成后，打开 FotCrypt 挂载的目录即可看到解密后的文件。
 
-- If involving commercial use, please avoid using "OpenList" or any confusing naming as the project name;
+### 工作原理
 
-- If you need to use materials located under OpenListTeam/Logo, you may modify and use them under compliance with the agreement.
+- **解密（读）**：`.fot` 文件显示为原始文件名和明文大小；下载/预览时通过 AES-256-CTR 实时解密，支持随机访问（HTTP Range / 视频拖动）
+- **加密（写）**：上传的文件自动加密为 `.fot`（PBKDF2 + AES-256-CTR + HMAC），与飞牛备份格式兼容
 
-Thank you for your support and understanding of the OpenList project.
+### 已知限制
 
-## Features
+- **首次打开大目录较慢**：每个 `.fot` 文件都需要读取头部才能得到真实文件名/大小，相当于每个文件一次底层存储请求。在云盘上受限于厂商 API 限速（如阿里云盘 `getDownloadUrl` 约 1 次/秒），几百个文件的目录首次打开可能需要一分钟左右。**再次打开走缓存，秒开**。
+- 读写内容无损，但 `.fot` 文件名编码了原名/大小/mtime，如需恢复到飞牛系统请保留原始 mtime。
 
-- [x] Multiple storages
-  - [x] Local storage
-  - [x] [Aliyundrive](https://www.alipan.com)
-  - [x] OneDrive / Sharepoint ([Global](https://www.microsoft.com/en-us/microsoft-365/onedrive/online-cloud-storage), [CN](https://portal.partner.microsoftonline.cn), DE, US)
-  - [x] [189cloud](https://cloud.189.cn) (Personal, Family)
-  - [x] [GoogleDrive](https://drive.google.com)
-  - [x] [123pan](https://www.123pan.com)
-  - [x] [FTP / SFTP](https://en.wikipedia.org/wiki/File_Transfer_Protocol)
-  - [x] [PikPak](https://www.mypikpak.com)
-  - [x] [S3](https://aws.amazon.com/s3)
-  - [x] [Seafile](https://seafile.com)
-  - [x] [UPYUN Storage Service](https://www.upyun.com/products/file-storage)
-  - [x] [WebDAV](https://en.wikipedia.org/wiki/WebDAV)
-  - [x] Teambition([China](https://www.teambition.com), [International](https://us.teambition.com))
-  - [x] [MediaFire](https://www.mediafire.com)
-  - [x] [Mediatrack](https://www.mediatrack.cn)
-  - [x] [ProtonDrive](https://proton.me/drive)
-  - [x] [139yun](https://yun.139.com) (Personal, Family, Group, Share)
-  - [x] [YandexDisk](https://disk.yandex.com)
-  - [x] [BaiduNetdisk](http://pan.baidu.com)
-  - [x] [Terabox](https://www.terabox.com/main)
-  - [x] [UC](https://drive.uc.cn)
-  - [x] [Quark](https://pan.quark.cn)
-  - [x] [Thunder](https://pan.xunlei.com)
-  - [x] [Lanzou](https://www.lanzou.com)
-  - [x] [ILanzou](https://www.ilanzou.com)
-  - [x] [Google photo](https://photos.google.com)
-  - [x] [Mega.nz](https://mega.nz)
-  - [x] [Baidu photo](https://photo.baidu.com)
-  - [x] [SMB](https://en.wikipedia.org/wiki/Server_Message_Block)
-  - [x] [115](https://115.com)
-  - [X] [Cloudreve](https://cloudreve.org)
-  - [x] [Dropbox](https://www.dropbox.com)
-  - [x] [FeijiPan](https://www.feijipan.com)
-  - [x] [dogecloud](https://www.dogecloud.com/product/oss)
-  - [x] [Azure Blob Storage](https://azure.microsoft.com/products/storage/blobs)
-  - [x] [Chaoxing](https://www.chaoxing.com)
-  - [x] [CNB](https://cnb.cool/)
-  - [x] [Degoo](https://degoo.com)
-  - [x] [Doubao](https://www.doubao.com)
-  - [x] [Febbox](https://www.febbox.com)
-  - [x] [GitHub](https://github.com)
-  - [x] [OpenList](https://github.com/OpenListTeam/OpenList)
-  - [x] [Teldrive](https://github.com/tgdrive/teldrive)
-  - [x] [Weiyun](https://www.weiyun.com)
-  - [x] [DingTalk Docs](https://alidocs.dingtalk.com/)
-- [x] Easy to deploy and out-of-the-box
-- [x] File preview (PDF, markdown, code, plain text, ...)
-- [x] Image preview in gallery mode
-- [x] Video and audio preview, support lyrics and subtitles
-- [x] Office documents preview (docx, pptx, xlsx, ...)
-- [x] `README.md` preview rendering
-- [x] File permalink copy and direct file download
-- [x] Dark mode
-- [x] I18n
-- [x] Protected routes (password protection and authentication)
-- [x] WebDAV
-- [x] Docker Deploy
-- [x] Cloudflare Workers proxy
-- [x] File/Folder package download
-- [x] Web upload(Can allow visitors to upload), delete, mkdir, rename, move and copy
-- [x] Offline download
-- [x] Copy files between two storage
-- [x] Multi-thread downloading acceleration for single-thread download/stream
+---
 
-## Document
+## 构建与发布
 
-- 📘 [Docs](https://doc.oplist.org)
-- 🌏 [CN Mirror](https://doc.oplist.org.cn)
-- ⚖️ [Terms of Use](https://doc.oplist.org/terms)
-- 🔒 [Privacy Policy](https://doc.oplist.org/privacy)
+本 fork 通过 GitHub Actions 在 Release 发布时自动构建全平台二进制，与上游流程一致。
 
-## Demo
+## 上游 OpenList
 
-- 🌎 [Global Demo](https://demo.oplist.org)
-- 🇨🇳 [CN Demo](https://demo.oplist.org.cn)
+OpenList 是一个有韧性、长期治理、社区驱动的 AList 分支，功能完整、生态成熟。上游项目信息见：
 
-## Discussion
+- [OpenListTeam/OpenList](https://github.com/OpenListTeam/OpenList)
+- [官方文档](https://doc.oplist.org)
 
-Please refer to [*Discussions*](https://github.com/OpenListTeam/OpenList/discussions) for raising general questions, ***Issues* is for bug reports and feature requests only.**
+## 许可证
 
-## Sponsor
-
-[![VPS.Town](https://vps.town/static/images/sponsor.png)](https://vps.town "VPS.Town - Trust, Effortlessly. Your Cloud, Reimagined.")
-
-## Donors
-
-Thanks to the following donors for their generous support:
-
-- [HisAtri](https://github.com/HisAtri)
-- 爱发电用户_7jTh
-- suka
-
-## License
-
-The `OpenList` is open-source software licensed under the [AGPL-3.0](https://www.gnu.org/licenses/agpl-3.0.txt) license.
-
-## Disclaimer
-
-- This project is a free and open-source software designed to facilitate file sharing via net disks, primarily intended to support the downloading and learning of the Go programming language.
-- Please comply with all applicable laws and regulations when using this software. Any form of misuse is strictly prohibited.
-- The software is based on official SDKs or APIs without any modification, disruption, or interference with their behavior.
-- It only performs HTTP 302 redirects or traffic forwarding, and does not intercept, store, or tamper with any user data.
-- This project is not affiliated with any official platform or service provider.
-- The software is provided "as is", without any warranties of any kind, either express or implied, including but not limited to warranties of merchantability or fitness for a particular purpose.
-- The maintainers are not liable for any direct or indirect damages arising from the use of, or inability to use, this software.
-- You are solely responsible for any risks associated with using this software, including but not limited to account bans or download speed limitations.
-- This project is licensed under the [AGPL-3.0](https://www.gnu.org/licenses/agpl-3.0.txt) License. Please see the [LICENSE](./LICENSE) file for details.
-
-## Contact Us
-
-- [@GitHub](https://github.com/OpenListTeam)
-- [Telegram Group](https://t.me/OpenListTeam)
-- [Telegram Channel](https://t.me/OpenListOfficial)
-
-## Contributors
-
-We sincerely thank the author [Xhofe](https://github.com/Xhofe) of the original project [AlistGo/alist](https://github.com/AlistGo/alist) and all other contributors.
-
-Thanks goes to these wonderful people:
-
-[![Contributors](https://contrib.rocks/image?repo=OpenListTeam/OpenList)](https://github.com/OpenListTeam/OpenList/graphs/contributors)
-
+基于 [AGPL-3.0](https://www.gnu.org/licenses/agpl-3.0.txt) 许可证开源。详情见 [LICENSE](./LICENSE)。
